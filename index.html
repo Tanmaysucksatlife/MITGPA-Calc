@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIT Academica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="light-theme">
+
+    <!-- TOP NAVIGATION -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo"> MIT CGPA Portal</div>
+            <button class="theme-toggle" onclick="toggleTheme()">Dark Mode</button>
+        </div>
+    </nav>
+
+    <!-- MAIN CENTERED CONTAINER -->
+    <main class="container">
+
+        <!-- HEADER -->
+        <header class="page-header">
+            <h1>Academic Performance Evaluator</h1>
+            <p>Smart grade predictions and credit calculations for your curriculum.</p>
+        </header>
+
+        <!-- CENTERED INPUT FORM -->
+        <section class="glass-card form-section">
+            <div class="form-header">
+                <h2>Add Course Evaluation</h2>
+                <span class="badge" id="courseBadge">Select a course to view weightage</span>
+            </div>
+
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Branch</label>
+                    <select id="branchSelect" onchange="filterCourses()">
+                        <option value="CSE_AIDS">AI & Data Science (CSE)</option>
+                        <option value="ECE_CORE">Electronics Core (ECE)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Semester</label>
+                    <select id="yearSelect" onchange="filterCourses()">
+                        <option value="1">Semester 1</option>
+                        <option value="2">Semester 2</option>
+                        <option value="3">Semester 3</option>
+                        <option value="4">Semester 4</option>
+                    </select>
+                </div>
+
+                <div class="input-group full-width">
+                    <label>Course Subject</label>
+                    <select id="courseSelect" onchange="updateCourseInfo()"></select>
+                </div>
+            </div>
+
+            <div class="marks-grid">
+                <div class="input-group">
+                    <label>CCA 1 <span class="subtext">(out of 100)</span></label>
+                    <input type="number" id="cca1" placeholder="Score">
+                </div>
+                <div class="input-group">
+                    <label>CCA 2 <span class="subtext">(out of 100)</span></label>
+                    <input type="number" id="cca2" placeholder="Pending? Leave blank">
+                </div>
+                <div class="input-group">
+                    <label>End-Sem <span class="subtext">(out of 100)</span></label>
+                    <input type="number" id="endsem" placeholder="Pending? Leave blank">
+                </div>
+            </div>
+
+            <button class="primary-btn" onclick="addCourse()">Evaluate & Add to Dashboard</button>
+        </section>
+
+        <!-- METRICS -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Cumulative GPA</div>
+                <div class="kpi-value" id="cgpaVal">0.00</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Total Credits</div>
+                <div class="kpi-value" id="creditsVal">0</div>
+            </div>
+        </section>
+
+        <!-- RESULTS TABLE -->
+        <section class="glass-card table-section">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Credits</th>
+                        <th>Total %</th>
+                        <th>Grade</th>
+                        <th>Smart Suggestion</th>
+                    </tr>
+                </thead>
+                <tbody id="subjectTableBody">
+                    <tr>
+                        <td colspan="5" class="empty-state">No subjects evaluated yet. Add a course above.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        // Full Course Database
+        let catalog = {
+            "CSE_AIDS": {
+                "1": [
+                    {"code": "UC101", "name": "Indian Constitution", "credits": 1, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "UC102", "name": "Environment and Sustainability", "credits": 1, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "YOG10010", "name": "Yoga - I", "credits": 1, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "UC104", "name": "Social Leadership Development Program", "credits": 1, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "UC105", "name": "Financial Literacy", "credits": 1, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "CSE10040", "name": "Python Programming", "credits": 2, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "EMT11011", "name": "Linear Algebra and Differential Calculus", "credits": 3, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "CHM10011", "name": "Engineering Chemistry", "credits": 3, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "PHY101", "name": "Engineering Physics", "credits": 3, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "ME101", "name": "Engineering Graphics", "credits": 3, "weightage": {"cca1": 25, "cca2": 25, "assignment": 0, "endsem": 50}},
+                    {"code": "MEC10010", "name": "Ideas and Innovations in Manufacturing", "credits": 1, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}}
+                ],
+                "2": [
+                    {"code": "UC106", "name": "Yoga - II", "credits": 1, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "UC107", "name": "Co-creation", "credits": 1, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "UC108", "name": "Foundation of Peace", "credits": 2, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "UC109", "name": "Indian Knowledge System (General)", "credits": 2, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "UC110", "name": "Sports", "credits": 1, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "CIV10010", "name": "Engineering Mechanics", "credits": 3, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "CS102", "name": "Foundations of Programming", "credits": 4, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "MA102", "name": "Discrete Mathematics with Graph Theory", "credits": 3, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "CS103", "name": "Foundations of Computer Architecture and System Design", "credits": 4, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}}
+                ],
+                "3": [
+                    {"code": "CS201", "name": "Advanced Data Structures", "credits": 3, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "CS202", "name": "Artificial Intelligence and Expert Systems", "credits": 3, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "CS203", "name": "Object Oriented Programming", "credits": 3, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "MA201", "name": "Applied Probability and Statistics", "credits": 4, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}}
+                ],
+                "4": [
+                    {"code": "CS204", "name": "Database Management Systems", "credits": 4, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "CS205", "name": "Operating Systems", "credits": 3, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "CS206", "name": "Machine Learning Foundations", "credits": 3, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "CS207", "name": "Design and Analysis of Algorithms", "credits": 4, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}}
+                ]
+            },
+            "ECE_CORE": {
+                "1": [
+                    {"code": "EMT11011", "name": "Linear Algebra and Differential Calculus", "credits": 3, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "EE101", "name": "Basic Electrical Engineering", "credits": 4, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "CIV10010", "name": "Engineering Mechanics", "credits": 3, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "CSE10040", "name": "Python Programming", "credits": 2, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "EC101", "name": "Basics Electronics Engineering", "credits": 3, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}}
+                ],
+                "2": [
+                    {"code": "MA102", "name": "Integral Calculus", "credits": 3, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "EC102", "name": "Digital Electronics", "credits": 4, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "CHM10011", "name": "Engineering Chemistry", "credits": 3, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "EC103", "name": "Network Theory", "credits": 3, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}}
+                ],
+                "3": [
+                    {"code": "MA201", "name": "Calculus and Statistical Methods", "credits": 4, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "EC201", "name": "Signals and Systems", "credits": 3, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "EC202", "name": "Electronic Devices and Circuits", "credits": 4, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "CS201", "name": "Data Structures and Algorithms", "credits": 3, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}}
+                ],
+                "4": [
+                    {"code": "EC203", "name": "Analog Circuits and Applications", "credits": 3, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}},
+                    {"code": "EC204", "name": "Communication Systems", "credits": 3, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "EC205", "name": "Microcontrollers and Applications", "credits": 4, "weightage": {"cca1": 15, "cca2": 15, "assignment": 20, "endsem": 50}},
+                    {"code": "EC206", "name": "Control Systems", "credits": 3, "weightage": {"cca1": 20, "cca2": 20, "assignment": 10, "endsem": 50}}
+                ]
+            }
+        };
+
+        let evaluatedSubjects = [];
+        let currentCourseList = [];
+
+        window.onload = () => {
+            filterCourses();
+        };
+
+        function filterCourses() {
+            const branch = document.getElementById('branchSelect').value;
+            const year = document.getElementById('yearSelect').value;
+            const courseSelect = document.getElementById('courseSelect');
+
+            courseSelect.innerHTML = "";
+            currentCourseList = catalog[branch][year] || [];
+
+            if (currentCourseList.length === 0) {
+                let opt = document.createElement('option');
+                opt.text = "No subjects found";
+                courseSelect.add(opt);
+                document.getElementById('courseBadge').textContent = "No data available";
+                return;
+            }
+
+            currentCourseList.forEach((course, index) => {
+                let opt = document.createElement('option');
+                opt.value = index;
+                opt.text = `${course.code} - ${course.name}`;
+                courseSelect.add(opt);
+            });
+            updateCourseInfo();
+        }
+
+        function updateCourseInfo() {
+            const idx = document.getElementById('courseSelect').value;
+            if(!currentCourseList[idx]) return;
+            const course = currentCourseList[idx];
+            const w = course.weightage;
+            const badge = document.getElementById('courseBadge');
+            badge.textContent = `Weightage: CCA1 (${w.cca1}%) | CCA2 (${w.cca2}%) | Assmt (${w.assignment}%) | End-Sem (${w.endsem}%)`;
+        }
+
+        function getGradePoint(percentage) {
+            if (percentage >= 90) return { point: 10, letter: "S" };
+            if (percentage >= 80) return { point: 9, letter: "A" };
+            if (percentage >= 70) return { point: 8, letter: "B" };
+            if (percentage >= 60) return { point: 7, letter: "C" };
+            if (percentage >= 50) return { point: 6, letter: "D" };
+            if (percentage >= 40) return { point: 5, letter: "E" };
+            return { point: 0, letter: "F" };
+        }
+
+        function addCourse() {
+            const idx = document.getElementById('courseSelect').value;
+            if(!currentCourseList[idx]) return;
+
+            const course = currentCourseList[idx];
+            const w = course.weightage;
+
+            // Get inputs (treat blanks as 0 or pending logic, for now calculating current total)
+            const cca1_val = parseFloat(document.getElementById('cca1').value) || 0;
+            const cca2_val = parseFloat(document.getElementById('cca2').value) || 0;
+            const endsem_val = parseFloat(document.getElementById('endsem').value) || 0;
+            const assmt_val = 100; // Assuming full marks for assignments to motivate, or you can add an input for it.
+
+            // Calculate weighted percentage
+            const totalPercent = (cca1_val * (w.cca1 / 100)) +
+                                 (cca2_val * (w.cca2 / 100)) +
+                                 (endsem_val * (w.endsem / 100)) +
+                                 (assmt_val * (w.assignment / 100));
+
+            const grade = getGradePoint(totalPercent);
+
+            evaluatedSubjects.push({
+                name: course.name,
+                credits: course.credits,
+                total: totalPercent.toFixed(2),
+                gradeLetter: grade.letter,
+                gradePoint: grade.point,
+                suggestion: grade.point < 8 ? "Need to score higher in End-Sem to boost this." : "On track for a solid grade!"
+            });
+
+            // Clear inputs
+            document.getElementById('cca1').value = '';
+            document.getElementById('cca2').value = '';
+            document.getElementById('endsem').value = '';
+
+            renderTable();
+            calculateCGPA();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('subjectTableBody');
+            tbody.innerHTML = '';
+
+            if (evaluatedSubjects.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No subjects evaluated yet. Add a course above.</td></tr>`;
+                return;
+            }
+
+            evaluatedSubjects.forEach(sub => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 500;">${sub.name}</td>
+                    <td>${sub.credits}</td>
+                    <td>${sub.total}%</td>
+                    <td><span class="grade-pill grade-${sub.gradeLetter}">${sub.gradeLetter}</span></td>
+                    <td style="color: var(--text-secondary); font-size: 0.9rem;">${sub.suggestion}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function calculateCGPA() {
+            let totalCredits = 0;
+            let totalPoints = 0;
+
+            evaluatedSubjects.forEach(sub => {
+                totalCredits += sub.credits;
+                totalPoints += (sub.credits * sub.gradePoint);
+            });
+
+            const cgpa = totalCredits === 0 ? 0 : (totalPoints / totalCredits).toFixed(2);
+            document.getElementById('cgpaVal').innerText = cgpa;
+            document.getElementById('creditsVal').innerText = totalCredits;
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            if (body.classList.contains('light-theme')) {
+                body.classList.remove('light-theme');
+                body.classList.add('dark-theme');
+            } else {
+                body.classList.remove('dark-theme');
+                body.classList.add('light-theme');
+            }
+        }
+    </script>
+</body>
+</html>
